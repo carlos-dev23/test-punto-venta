@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -35,9 +35,6 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Install dependencies
-# We use --no-scripts to avoid errors during build if environment variables are missing
-# Scripts will be run or discovered at runtime if needed, but usually package discovery works fine.
-# If scripts fail, we can add them to entrypoint.
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # Set permissions
