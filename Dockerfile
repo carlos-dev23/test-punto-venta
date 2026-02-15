@@ -1,44 +1,27 @@
-FROM php:8.2-fpm
+FROM richarvey/nginx-php-fpm:latest
 
-# Install system dependencies
+# Copiar el proyecto
+COPY . /var/www/html
+
+# Configurar el directorio raíz de Nginx para Laravel
+ENV WEBROOT /var/www/html/public
+ENV APP_TYPE php
+ENV SKIP_COMPOSER 0
+ENV PHP_ERRORS_STDERR 1
+ENV RUN_SCRIPTS 1
+
+# Instalar dependencias del sistema necesarias
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
+    libsqlite3-dev \
     libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    libsqlite3-dev
+    libjpeg-dev \
+    libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo_sqlite
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Permisos para Laravel
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite
-
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
-WORKDIR /var/www
-
-# Copy existing application directory contents
-COPY . /var/www
-
-# Install dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage \
-    && chmod -R 775 /var/www/bootstrap/cache
-
-# Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Expose port 9000 and start php-fpm server
-EXPOSE 10000
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=10000"]
+# Puerto que Render requiere
+EXPOSE 80
