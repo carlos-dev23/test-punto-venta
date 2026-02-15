@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Run composer scripts that were skipped during build
+# This ensures package discovery happens in the correct runtime environment
+composer dump-autoload --optimize
+
 # Generate app key if not set
 php artisan key:generate --force
 

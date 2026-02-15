@@ -7,13 +7,15 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    libsqlite3-dev
+    libsqlite3-dev \
+    libzip-dev \
+    libicu-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite zip intl opcache
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -33,7 +35,10 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # Install dependencies
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+# We use --no-scripts to avoid errors during build if environment variables are missing
+# Scripts will be run or discovered at runtime if needed, but usually package discovery works fine.
+# If scripts fail, we can add them to entrypoint.
+RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html \
