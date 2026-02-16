@@ -8,6 +8,8 @@ use Livewire\Component;
 class ListadoNotas extends Component
 {
     public string $fecha = '';
+    public bool $showTicket = false;
+    public ?Sale $ticketSale = null;
 
     public function mount(): void
     {
@@ -37,6 +39,21 @@ class ListadoNotas extends Component
         return Sale::query()
             ->whereDate('created_at', $this->fecha)
             ->count();
+    }
+
+    public function reprint(int $saleId): void
+    {
+        $this->ticketSale = Sale::with(['client', 'saleItems.article'])->find($saleId);
+
+        if ($this->ticketSale) {
+            $this->showTicket = true;
+        }
+    }
+
+    public function closeTicket(): void
+    {
+        $this->showTicket = false;
+        $this->ticketSale = null;
     }
 
     public function render()
